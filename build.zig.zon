@@ -1,0 +1,14 @@
+.{
+    .name = .adventofcode2025,
+    .fingerprint = 0x160bb40457209e83,
+    .version = "0.0.0",
+    .dependencies = .{
+        .zbench = .{ .path = "vendor/zbench" },
+    },
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+        "README.md",
+    },
+}

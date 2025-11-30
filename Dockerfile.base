@@ -1,0 +1,25 @@
+# --------------------------
+FROM alpine:edge AS build
+# --------------------------
+
+# Build rootfs from scratch
+RUN apk --allow-untrusted \
+  -X http://dl-cdn.alpinelinux.org/alpine/edge/main \
+  -X http://dl-cdn.alpinelinux.org/alpine/edge/community \
+  -U \
+  -p /newroot \
+  --no-cache \
+  --initdb \
+  add \
+  alpine-release \
+  zig
+
+WORKDIR /work
+
+# --------------------
+FROM scratch
+# --------------------
+
+COPY --from=build /newroot /
+
+ENTRYPOINT [ "/usr/bin/zig" ]
