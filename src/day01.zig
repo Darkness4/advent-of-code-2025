@@ -26,8 +26,7 @@ fn day01(data: []const u8) !usize {
     var lines = std.mem.splitScalar(u8, data, '\n');
     var acc: usize = 0;
     var counter: i64 = 50;
-    var idx: usize = 0;
-    while (lines.next()) |line| : (idx += 1) {
+    while (lines.next()) |line| {
         var neg: i64 = 1;
         if (line[0] == 'L') {
             neg = -1;
@@ -47,9 +46,8 @@ fn day01p2(data: []const u8) !usize {
     var lines = std.mem.splitScalar(u8, data, '\n');
     var acc: usize = 0;
     var counter: i64 = 50;
-    var idx: usize = 0;
     var dir: u8 = 'R';
-    while (lines.next()) |line| : (idx += 1) {
+    while (lines.next()) |line| {
         if (line[0] != dir) {
             // Reverse direction relatively to last direction.
             // This is because @divFloor behave differently for negative numbers,
