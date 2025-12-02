@@ -30,12 +30,12 @@ fn itoa(value: usize, buf: []u8) []u8 {
         return buf[0..1];
     }
 
-    var abs_value = @abs(value);
-    const digit_count = std.math.log10_int(abs_value) + 1;
+    const digit_count = std.math.log10_int(value) + 1;
 
+    var res = value;
     for (0..digit_count) |i| {
-        buf[(digit_count) - i - 1] = digits[@rem(abs_value, 10)];
-        abs_value = @divTrunc(abs_value, 10);
+        buf[digit_count - i - 1] = digits[res % 10];
+        res /= 10;
     }
 
     return (buf[0..digit_count]);
