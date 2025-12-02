@@ -72,9 +72,10 @@ fn day02(data: []const u8) !usize {
 }
 
 fn isRepeatingPatterns(data: []const u8) bool {
-    checks: for (1..data.len / 2 + 1) |size| {
+    var size: usize = data.len / 2;
+    checks: while (size > 0) : (size -= 1) {
         // If there is not enough spaces to fit the pattern.
-        if (@rem(data.len, size) != 0) {
+        if (size != 1 and @rem(data.len, size) != 0) {
             continue;
         }
 
