@@ -38,7 +38,7 @@ fn itoa(value: usize, buf: []u8) []u8 {
         res /= 10;
     }
 
-    return (buf[0..digit_count]);
+    return buf[0..digit_count];
 }
 
 fn isRepeatingPattern(data: []const u8) bool {
@@ -80,10 +80,9 @@ fn isRepeatingPatterns(data: []const u8) bool {
         }
 
         for (1..data.len / size) |i| {
-            if (std.mem.eql(u8, data[0..size], data[i * size .. (i + 1) * size])) {
-                continue;
+            if (!std.mem.eql(u8, data[0..size], data[i * size .. (i + 1) * size])) {
+                continue :checks;
             }
-            continue :checks;
         }
         // Data is filled with repeating patterns.
         return true;
