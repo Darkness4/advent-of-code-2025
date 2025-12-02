@@ -79,19 +79,15 @@ fn isRepeatingPatterns(data: []const u8) bool {
             continue;
         }
 
-        // Number of checks
-        const checks = data.len / size - 1; // -1 to remove the initial check
-        for (1..checks + 1) |i| {
-            // std.debug.print("check {s}: {s} ({}-{}) in {s}\n", .{ data[0..size], data[i + 1 * size .. (i + 1) * size], i * size, (i + 1) * size, data });
+        for (1..data.len / size) |i| {
             if (std.mem.eql(u8, data[0..size], data[i * size .. (i + 1) * size])) {
                 continue;
             }
             continue :checks;
         }
-        // std.debug.print("ok\n", .{});
+        // Data is filled with repeating patterns.
         return true;
     }
-
     return false;
 }
 
