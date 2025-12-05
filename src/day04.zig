@@ -64,7 +64,7 @@ fn day04(data: []const u8) !usize {
                 continue :x_pos_loop;
             }
         }
-        if (count < 4) acc += 1;
+        acc += 1;
     }
 
     return acc;
@@ -111,16 +111,21 @@ const Matrix = struct {
     }
 };
 
+const LinkedPos = struct {
+    pos: Pos,
+    node: std.DoublyLinkedList.Node,
+};
+
 fn day04p2(data: []const u8) !usize {
     var lines = std.mem.splitScalar(u8, data, '\n');
     var acc: usize = 0;
 
-    var x_poss_buffer: [140 * 140]Pos = undefined;
-    var x_poss = std.ArrayList(Pos).initBuffer(&x_poss_buffer);
-
-    var buffer: [140 * 140 * @sizeOf(u8)]u8 = undefined;
+    var buffer: [140 * 140 * @sizeOf(u8) + 140 * 140 * @sizeOf(LinkedPos)]u8 = undefined;
     var fba = std.heap.FixedBufferAllocator.init(&buffer);
     const fba_allocator = fba.allocator();
+
+    var x_poss = std.DoublyLinkedList{};
+    var x_poss_len: usize = 0;
 
     var matrix = try Matrix.init(140, 140, fba_allocator);
     defer matrix.deinit();
@@ -134,7 +139,16 @@ fn day04p2(data: []const u8) !usize {
         }
         for (0.., matrix.data[matrix.row_cap * matrix.total_rows .. matrix.row_cap * matrix.total_rows + line.len], line) |idx_col, *d, s| {
             if (s == '@') {
-                x_poss.appendAssumeCapacity(.{ .x = matrix.total_rows, .y = idx_col });
+                const lpos = try fba_allocator.create(LinkedPos);
+                lpos.* = .{
+                    .pos = .{
+                        .x = matrix.total_rows,
+                        .y = idx_col,
+                    },
+                    .node = .{},
+                };
+                x_poss.append(&lpos.node);
+                x_poss_len += 1;
             }
             d.* = s;
         }
@@ -143,15 +157,16 @@ fn day04p2(data: []const u8) !usize {
     // For each @, count the neighbors @.
     while (true) {
         var current_cleaned: usize = 0;
-        const current_len = x_poss.items.len;
+        const current_len = x_poss_len;
         x_pos_loop: for (0..current_len) |_| {
             // dequeue
-            const x_pos = x_poss.orderedRemove(0); // O(n), probably worth to optimize
+            const x_pos_node = x_poss.popFirst() orelse unreachable;
+            const x_pos: *LinkedPos = @fieldParentPtr("node", x_pos_node);
             var count: usize = 0;
             for (dirs) |dir| {
                 // Skip if out of bounds
-                const check_x = @as(i64, @intCast(x_pos.x)) + dir.x;
-                const check_y = @as(i64, @intCast(x_pos.y)) + dir.y;
+                const check_x = @as(i64, @intCast(x_pos.*.pos.x)) + dir.x;
+                const check_y = @as(i64, @intCast(x_pos.*.pos.y)) + dir.y;
                 if (check_x >= matrix.total_rows or check_y >= matrix.row_size or check_x < 0 or check_y < 0) {
                     continue;
                 }
@@ -161,14 +176,13 @@ fn day04p2(data: []const u8) !usize {
                 }
                 if (count >= 4) {
                     // Requeue
-                    x_poss.appendAssumeCapacity(x_pos);
+                    x_poss.append(&x_pos.node);
                     continue :x_pos_loop;
                 }
             }
-            if (count < 4) {
-                matrix.set(@as(usize, @intCast(x_pos.x)), @as(usize, @intCast(x_pos.y)), 'x');
-                current_cleaned += 1;
-            }
+            matrix.set(@as(usize, @intCast(x_pos.*.pos.x)), @as(usize, @intCast(x_pos.*.pos.y)), 'x');
+            current_cleaned += 1;
+            x_poss_len -= 1;
         }
 
         if (current_cleaned == 0) {
