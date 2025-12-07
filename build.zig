@@ -17,6 +17,7 @@ pub fn build(b: *std.Build) !void {
         "day04",
         "day05",
         "day06",
+        "day07",
     };
 
     const test_run = b.step("test", "Run unit tests");

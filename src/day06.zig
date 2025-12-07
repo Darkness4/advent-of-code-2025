@@ -5,11 +5,6 @@ const zbench = @import("zbench");
 const input = std.mem.trimRight(u8, @embedFile("day06.txt"), "\n");
 const input_test = std.mem.trimRight(u8, @embedFile("day06_test.txt"), "\n");
 
-const Range = struct {
-    min: usize,
-    max: usize,
-};
-
 /// scanNumber scans a number in a string. Much more efficient than std.fmt.parseInt
 /// since we ignore '-' and other characters that could define a number (like hex, etc...).
 /// A very naive implementation, yet the fastest for Advent of Code.
