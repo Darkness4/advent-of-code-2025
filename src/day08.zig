@@ -11,6 +11,16 @@ const Pos = struct {
     z: i64,
 };
 
+fn comb(n: usize, r: usize) usize {
+    var res: usize = 1;
+    var i: usize = 1;
+    while (i <= r) : (i += 1) {
+        res *= n - i + 1;
+        res /= i;
+    }
+    return res;
+}
+
 /// scanNumber scans a number in a string. Much more efficient than std.fmt.parseInt
 /// since we ignore '-' and other characters that could define a number (like hex, etc...).
 /// A very naive implementation, yet the fastest for Advent of Code.
@@ -113,8 +123,8 @@ fn day08(data: []const u8, comptime max_pairs: usize) !usize {
         poss.appendAssumeCapacity(.{ .x = x, .y = y, .z = z });
     }
 
-    var dist_buffer: [499500]Edge = undefined; // 499500 = Comb(1000, 2)
-    var edges = std.ArrayList(Edge).initBuffer(&dist_buffer);
+    var edge_buffer: [comb(1000, 2)]Edge = undefined;
+    var edges = std.ArrayList(Edge).initBuffer(&edge_buffer);
 
     for (0.., poss.items) |i, a| {
         for (0.., poss.items) |j, b| {
@@ -191,8 +201,8 @@ fn day08p2(data: []const u8) !usize {
         poss.appendAssumeCapacity(.{ .x = x, .y = y, .z = z });
     }
 
-    var dist_buffer: [499500]Edge = undefined; // 499500 = Comb(1000, 2)
-    var edges = std.ArrayList(Edge).initBuffer(&dist_buffer);
+    var edge_buffer: [comb(1000, 2)]Edge = undefined;
+    var edges = std.ArrayList(Edge).initBuffer(&edge_buffer);
 
     for (0.., poss.items) |i, a| {
         for (0.., poss.items) |j, b| {
