@@ -12,6 +12,7 @@ RUN apk --allow-untrusted \
   --initdb \
   add \
   alpine-release \
+  ca-certificates \
   zig
 
 WORKDIR /work
