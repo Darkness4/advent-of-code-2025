@@ -10,16 +10,6 @@ const Pos = struct {
     y: i64,
 };
 
-fn comb(n: usize, r: usize) usize {
-    var res: usize = 1;
-    var i: usize = 1;
-    while (i <= r) : (i += 1) {
-        res *= n - i + 1;
-        res /= i;
-    }
-    return res;
-}
-
 /// scanNumber scans a number in a string. Much more efficient than std.fmt.parseInt
 /// since we ignore '-' and other characters that could define a number (like hex, etc...).
 /// A very naive implementation, yet the fastest for Advent of Code.
