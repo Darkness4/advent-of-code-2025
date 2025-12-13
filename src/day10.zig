@@ -338,6 +338,7 @@ pub fn main() !void {
 
     var bench = zbench.Benchmark.init(std.heap.page_allocator, .{
         .iterations = 5,
+        .track_allocations = true,
     });
     defer bench.deinit();
     try bench.add("day10 p1", struct {

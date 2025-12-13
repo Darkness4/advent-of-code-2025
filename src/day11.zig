@@ -138,7 +138,9 @@ pub fn main() !void {
     std.debug.print("day11 p1: {} in {}ns\n", .{ result_p1, p1_time });
     std.debug.print("day11 p2: {} in {}ns\n", .{ result_p2, p2_time });
 
-    var bench = zbench.Benchmark.init(std.heap.page_allocator, .{});
+    var bench = zbench.Benchmark.init(std.heap.page_allocator, .{
+        .track_allocations = true,
+    });
     defer bench.deinit();
     try bench.add("day11 p1", struct {
         pub fn call(allocator: std.mem.Allocator) void {
