@@ -36,43 +36,49 @@ fn scanTarget(data: []const u8, idx: *usize) usize {
     return output;
 }
 
-// Use BFS to find the right button combination
-fn bfs(
-    allocator: std.mem.Allocator,
+// Use parity to find the right button combination.
+//
+// Buttons are pushed only once at most.
+fn solve(
     target: usize,
     buttons: []usize,
-) !usize {
-    var visited = std.AutoHashMap(usize, usize).init(allocator);
-    defer visited.deinit();
+) usize {
+    // Test each combination of button
+    const n = buttons.len;
+    const total_combinations = (@as(usize, 1) << @intCast(n)) - 1;
 
-    var queue = std.ArrayList(usize).empty;
-    defer queue.deinit(allocator);
-
-    try visited.put(0, 0); // Set initial state (0 = no buttons pressed)
-    try queue.append(allocator, 0);
-
-    while (queue.items.len > 0) {
-        const current = queue.orderedRemove(0); // Dequeue the first element
-        const count = visited.get(current) orelse unreachable; // Should be initialized
-        for (buttons) |button| {
-            const next = current ^ button; // Toggle button
-            const next_count = count + 1;
-            if (next == target) {
-                return next_count;
+    // Iterate through all bit masks from 1 to 2^n - 1
+    // 000001
+    // 000010
+    // 000011
+    // ...
+    // which permits to create the combination of buttons.
+    var mask: usize = 0;
+    var min_button_pushed: usize = std.math.maxInt(usize);
+    while (mask <= total_combinations) : (mask += 1) {
+        var state: usize = 0;
+        var i: usize = 0;
+        var button_pushed: usize = 0;
+        while (i < n) : (i += 1) {
+            if ((mask & (@as(usize, 1) << @intCast(i))) != 0) {
+                state ^= buttons[i];
+                button_pushed += 1;
+                // std.debug.print("{b} ", .{buttons[i]});
             }
+        }
+        // std.debug.print("-> {b}\n", .{state});
 
-            if (visited.get(next) == null) {
-                try visited.put(next, next_count);
-                try queue.append(allocator, next); // Enqueue state
-            }
+        if (state == target) {
+            min_button_pushed = @min(min_button_pushed, button_pushed);
         }
     }
 
-    // The exercise should be solvable.
-    unreachable;
+    // std.debug.print("min_button_pushed: {}\n", .{min_button_pushed});
+
+    return min_button_pushed;
 }
 
-fn day10(allocator: std.mem.Allocator, data: []const u8) !usize {
+fn day10(data: []const u8) !usize {
     var lines = std.mem.splitScalar(u8, data, '\n');
     var acc: usize = 0;
 
@@ -102,9 +108,10 @@ fn day10(allocator: std.mem.Allocator, data: []const u8) !usize {
 
         // We ignore the joltage for part 1
 
-        // Execute the BFS
-        acc += try bfs(allocator, target, buttons.items);
+        acc += solve(target, buttons.items);
     }
+
+    // std.debug.print("acc: {}\n", .{acc});
 
     return acc;
 }
@@ -126,37 +133,37 @@ const State = struct {
 };
 
 fn listOptions(
-    allocator: std.mem.Allocator,
     target: usize,
     buttons: []usize,
     out: *AutoHashSet(usize),
 ) !void {
-    var visited = std.AutoHashMap(usize, usize).init(allocator);
-    defer visited.deinit();
+    // Test each combination of button
+    // Buttons: [1, 2, 4]
+    // Len: 3
+    const n = buttons.len;
+    // Total combinations:
+    // 1 << 3 - 1 = 1000 - 1 = 111
+    const total_combinations = (@as(usize, 1) << @intCast(n)) - 1;
 
-    var queue = std.ArrayList(usize).empty;
-    defer queue.deinit(allocator);
-
-    try visited.put(0, 0); // Set initial state (0 = no buttons pressed)
-    try queue.append(allocator, 0);
-
-    // std.debug.print("target: {b}\n", .{target});
-
-    while (queue.items.len > 0) {
-        const button_state = queue.orderedRemove(0); // Dequeue the first element
-        const current = visited.get(button_state) orelse unreachable; // Should be initialized
-        for (0.., buttons) |i, button| {
-            const next = current ^ button; // Tooggle button
-            const next_button_state = button_state ^ @as(usize, 1) << @as(u6, @intCast(i));
-            if (next == target) {
-                try out.put(next_button_state, {});
-                continue;
+    // Iterate through all bit masks from 1 to 2^n - 1
+    // which permits to create the combination of buttons.
+    //
+    // 001
+    // 010
+    // 011
+    var mask: usize = 0;
+    while (mask <= total_combinations) : (mask += 1) {
+        var state: usize = 0;
+        var i: usize = 0;
+        while (i < n) : (i += 1) {
+            if ((mask & (@as(usize, 1) << @intCast(i))) != 0) {
+                state ^= buttons[i];
             }
+        }
 
-            if (visited.get(next_button_state) == null) {
-                try visited.put(next_button_state, next);
-                try queue.append(allocator, next_button_state); // Enqueue state
-            }
+        if (state == target) {
+            // std.debug.print("state: {b}, mask: {b}\n", .{ state, mask });
+            try out.put(mask, {});
         }
     }
 
@@ -202,14 +209,19 @@ fn dfs(
     if (options.get(parity) == null) {
         const opts_set = try allocator.create(AutoHashSet(usize));
         opts_set.* = AutoHashSet(usize).init(allocator);
-        try listOptions(allocator, parity, buttons, opts_set);
+        try listOptions(parity, buttons, opts_set);
         try options.put(parity, opts_set);
     }
     const opts = options.get(parity) orelse unreachable;
     var it = opts.keyIterator();
 
+    // var it2 = opts.keyIterator();
+    // while (it2.next()) |option| {
+    //     std.debug.print("{b}, ", .{option.*});
+    // }
+    // std.debug.print("\n", .{});
+
     option_loop: while (it.next()) |option| {
-        // std.debug.print("option: {b}\n", .{option.*});
         var next_joltages = try std.ArrayList(usize).initCapacity(allocator, joltages.len);
         for (0..joltages.len) |i| {
             next_joltages.appendAssumeCapacity(joltages[i]);
@@ -240,11 +252,13 @@ fn dfs(
             }
         }
         for (next_joltages.items) |*j| {
-            j.* = j.* / 2;
+            j.* = @divExact(j.*, 2);
         }
         const new_pressed = try dfs(allocator, cache, next_joltages.items, buttons, options);
         min_button_pushed = @min(min_button_pushed, button_pushed + 2 * new_pressed);
     }
+
+    // std.debug.print("res: {d}\n", .{min_button_pushed});
 
     try cache.put(joltages, min_button_pushed);
     return min_button_pushed;
@@ -315,18 +329,20 @@ fn day10p2(allocator: std.mem.Allocator, data: []const u8) !usize {
 
 pub fn main() !void {
     var timer = try std.time.Timer.start();
-    const result_p1 = try day10(std.heap.page_allocator, input);
+    const result_p1 = try day10(input);
     const p1_time = timer.lap();
     const result_p2 = try day10p2(std.heap.page_allocator, input);
     const p2_time = timer.read();
     std.debug.print("day10 p1: {} in {}ns\n", .{ result_p1, p1_time });
     std.debug.print("day10 p2: {} in {}ns\n", .{ result_p2, p2_time });
 
-    var bench = zbench.Benchmark.init(std.heap.page_allocator, .{});
+    var bench = zbench.Benchmark.init(std.heap.page_allocator, .{
+        .iterations = 5,
+    });
     defer bench.deinit();
     try bench.add("day10 p1", struct {
-        pub fn call(allocator: std.mem.Allocator) void {
-            _ = day10(allocator, input) catch unreachable;
+        pub fn call(_: std.mem.Allocator) void {
+            _ = day10(input) catch unreachable;
         }
     }.call, .{});
     try bench.add("day10 p2", struct {
@@ -342,7 +358,7 @@ pub fn main() !void {
 }
 
 test "day10" {
-    const result = try day10(std.heap.page_allocator, input_test);
+    const result = try day10(input_test);
     const expect = 7;
     std.testing.expect(result == expect) catch |err| {
         std.debug.print("got: {}, expect: {}\n", .{ result, expect });
